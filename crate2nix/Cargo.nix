@@ -20,7 +20,7 @@ rec {
   #
 
   rootCrate = rec {
-    packageId = "crate2nix 0.7.0-alpha.6 (path+file:///home/peter/projects/crate2nix/crate2nix)";
+    packageId = "crate2nix 0.7.0-alpha.6 (path+file:///home/cloud/Documents/code/nix/crate2nix/crate2nix)";
 
     # Use this attribute to refer to the derivation building your root crate package.
     # You can override the features with rootCrate.build.override { features = [ "default" "feature1" ... ]; }.
@@ -40,9 +40,9 @@ rec {
   # workspaceMembers."${crateName}".build.override { features = [ "default" "feature1" ... ]; }.
   workspaceMembers = {
     "crate2nix" = rec {
-      packageId = "crate2nix 0.7.0-alpha.6 (path+file:///home/peter/projects/crate2nix/crate2nix)";
+      packageId = "crate2nix 0.7.0-alpha.6 (path+file:///home/cloud/Documents/code/nix/crate2nix/crate2nix)";
       build = buildRustCrateWithFeatures {
-        packageId = "crate2nix 0.7.0-alpha.6 (path+file:///home/peter/projects/crate2nix/crate2nix)";
+        packageId = "crate2nix 0.7.0-alpha.6 (path+file:///home/cloud/Documents/code/nix/crate2nix/crate2nix)";
         features = rootFeatures;
       };
 
@@ -587,6 +587,42 @@ rec {
         features = {
         };
       };
+    "clicolors-control 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "clicolors-control";
+        version = "1.0.1";
+        edition = "2015";
+        sha256 = "07klix8nbpwk0cg1k4h0kkiijm1jxvrzndqdkr7dqr6xvkjjw24h";
+        authors = [
+          "Armin Ronacher <armin.ronacher@active-4.com>"
+        ];
+        dependencies = [
+          {
+            name = "atty";
+            packageId = "atty 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)";
+            target = {target, features}: target."windows";
+          }
+          {
+            name = "lazy_static";
+            packageId = "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "libc";
+            packageId = "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)";
+            target = {target, features}: target."unix";
+          }
+          {
+            name = "winapi";
+            packageId = "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)";
+            target = {target, features}: target."windows";
+            features = [ "winbase" "handleapi" "consoleapi" "processenv" ];
+          }
+        ];
+        features = {
+          "default" = [ "terminal_autoconfig" ];
+        };
+        resolvedDefaultFeatures = [ "default" "terminal_autoconfig" ];
+      };
     "colored-diff 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
         crateName = "colored-diff";
@@ -614,7 +650,62 @@ rec {
         features = {
         };
       };
-    "crate2nix 0.7.0-alpha.6 (path+file:///home/peter/projects/crate2nix/crate2nix)"
+    "console 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "console";
+        version = "0.9.1";
+        edition = "2018";
+        sha256 = "17sxgdxd0m550s8x2fkbiykyyybcqda5yfszxc6xvjaasg141mgm";
+        authors = [
+          "Armin Ronacher <armin.ronacher@active-4.com>"
+        ];
+        dependencies = [
+          {
+            name = "clicolors-control";
+            packageId = "clicolors-control 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "encode_unicode";
+            packageId = "encode_unicode 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)";
+            target = {target, features}: target."windows";
+          }
+          {
+            name = "lazy_static";
+            packageId = "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "libc";
+            packageId = "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "regex";
+            packageId = "regex 1.3.3 (registry+https://github.com/rust-lang/crates.io-index)";
+            usesDefaultFeatures = false;
+            features = [ "std" ];
+          }
+          {
+            name = "termios";
+            packageId = "termios 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)";
+            target = {target, features}: target."unix";
+          }
+          {
+            name = "unicode-width";
+            packageId = "unicode-width 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)";
+            optional = true;
+          }
+          {
+            name = "winapi";
+            packageId = "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)";
+            target = {target, features}: target."windows";
+            features = [ "winbase" "winuser" "consoleapi" "processenv" "wincon" ];
+          }
+        ];
+        features = {
+          "default" = [ "unicode-width" ];
+        };
+        resolvedDefaultFeatures = [ "default" "unicode-width" ];
+      };
+    "crate2nix 0.7.0-alpha.6 (path+file:///home/cloud/Documents/code/nix/crate2nix/crate2nix)"
       = rec {
         crateName = "crate2nix";
         version = "0.7.0-alpha.6";
@@ -640,6 +731,10 @@ rec {
             packageId = "hex 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
           }
           {
+            name = "indicatif";
+            packageId = "indicatif 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
             name = "itertools";
             packageId = "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)";
           }
@@ -658,6 +753,10 @@ rec {
           {
             name = "quicli";
             packageId = "quicli 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "rayon";
+            packageId = "rayon 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)";
           }
           {
             name = "semver";
@@ -917,6 +1016,20 @@ rec {
         features = {
           "default" = [ "use_std" ];
         };
+      };
+    "encode_unicode 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "encode_unicode";
+        version = "0.3.6";
+        edition = "2015";
+        sha256 = "07w3vzrhxh9lpjgsg2y5bwzfar2aq35mdznvcp3zjl0ssj7d4mx3";
+        authors = [
+          "Torbjørn Birch Moltu <t.b.moltu@lyse.net>"
+        ];
+        features = {
+          "default" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
       };
     "env_logger 0.5.13 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
@@ -1411,6 +1524,40 @@ rec {
           "simd-accel" = [ "globset/simd-accel" ];
         };
       };
+    "indicatif 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "indicatif";
+        version = "0.13.0";
+        edition = "2018";
+        sha256 = "11w4yi5kqnkblxidajnda0s85q5q864f4kplzavp0pk6n37vqwl5";
+        authors = [
+          "Armin Ronacher <armin.ronacher@active-4.com>"
+        ];
+        dependencies = [
+          {
+            name = "console";
+            packageId = "console 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "lazy_static";
+            packageId = "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "number_prefix";
+            packageId = "number_prefix 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "regex";
+            packageId = "regex 1.3.3 (registry+https://github.com/rust-lang/crates.io-index)";
+            usesDefaultFeatures = false;
+            features = [ "std" ];
+          }
+        ];
+        features = {
+          "with_rayon" = [ "rayon" ];
+        };
+        resolvedDefaultFeatures = [ "default" ];
+      };
     "itertools 0.7.11 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
         crateName = "itertools";
@@ -1655,6 +1802,20 @@ rec {
         ];
         features = {
         };
+      };
+    "number_prefix 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "number_prefix";
+        version = "0.3.0";
+        edition = "2015";
+        sha256 = "0slm4mqmpgs6hvz22ycny9lvyvl9ivs80a1lncslp7lszz02zc0p";
+        authors = [
+          "Benjamin Sago <ogham@bsago.me>"
+        ];
+        features = {
+          "default" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
       };
     "opaque-debug 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
@@ -2977,6 +3138,24 @@ rec {
         features = {
         };
       };
+    "termios 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "termios";
+        version = "0.3.1";
+        edition = "2015";
+        sha256 = "09any1p4jp4bphvb5ikagnvwjc3xn2djchy96nkpa782xb2j1dkj";
+        authors = [
+          "David Cuddeback <david.cuddeback@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "libc";
+            packageId = "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+        ];
+        features = {
+        };
+      };
     "textwrap 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
         crateName = "textwrap";
@@ -3468,7 +3647,7 @@ rec {
         features = {
           "debug" = [ "impl-debug" ];
         };
-        resolvedDefaultFeatures = [ "consoleapi" "errhandlingapi" "fileapi" "minwinbase" "minwindef" "ntdef" "ntsecapi" "processenv" "profileapi" "std" "sysinfoapi" "timezoneapi" "winbase" "wincon" "winerror" "winnt" ];
+        resolvedDefaultFeatures = [ "consoleapi" "errhandlingapi" "fileapi" "handleapi" "minwinbase" "minwindef" "ntdef" "ntsecapi" "processenv" "profileapi" "std" "sysinfoapi" "timezoneapi" "winbase" "wincon" "winerror" "winnt" "winuser" ];
       };
     "winapi-i686-pc-windows-gnu 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
