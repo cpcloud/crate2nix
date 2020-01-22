@@ -1,7 +1,8 @@
 //! Utilities for calling `nix-prefetch` on packages.
 
 use std::io::Write;
-use std::process::Command;
+use tokio::process::Command;
+use futures::prelude::*;
 
 use crate::resolve::{CrateDerivation, ResolvedSource};
 use crate::GenerateConfig;
@@ -43,23 +44,28 @@ pub fn prefetch(
         .unique_by(|p| &p.source)
         .count();
     let mut without_hash_idx = 0;
-    for package in &mut packages {
-        let existing_hash = old_hashes
-            .get(&package.package_id)
-            .or_else(|| hashes.get(&package.package_id));
+    let old_hashes_ref = &old_hashes;
+    let stream = futures::stream::iter(packages.iter()).then(move |package| async move {
+        let existing_hash = old_hashes_ref.get(&package.package_id);
         let sha256 = if let Some(hash) = existing_hash {
             hash.trim().to_string()
         } else {
             without_hash_idx += 1;
             if let ResolvedSource::CratesIo { .. } = package.source {
-                nix_prefetch_from_crates_io(package, without_hash_idx, without_hash_num)?
+                nix_prefetch_from_crates_io(package, without_hash_idx, without_hash_num).await?
             } else {
-                nix_prefetch_from_git(package, without_hash_idx, without_hash_num)?
+                nix_prefetch_from_git(package, without_hash_idx, without_hash_num).await?
             }
         };
 
-        package.source = package.source.with_sha256(sha256.clone());
-        hashes.insert(package.package_id.clone(), sha256);
+        Result::<_, Error>::Ok((package.source.with_sha256(sha256.clone()), package.package_id.clone(), sha256))
+    }).collect::<Vec<_>>();
+    let mut executor = tokio::runtime::Runtime::new()?;
+    let triples = executor.block_on(async move { stream.await }).into_iter().collect::<Result<Vec<_>, _>>()?;
+
+    for (package, (source, package_id, sha256)) in packages.iter_mut().zip(triples.into_iter()) {
+        package.source = source;
+        hashes.insert(package_id, sha256);
     }
 
     if hashes != old_hashes {
@@ -76,10 +82,11 @@ pub fn prefetch(
     Ok(hashes)
 }
 
-fn get_command_output(cmd: &str, args: &[&str]) -> Result<String, Error> {
+async fn get_command_output(cmd: &str, args: &[&str]) -> Result<String, Error> {
     let output = Command::new(cmd)
         .args(args)
         .output()
+        .await
         .map_err(|e| format_err!("While spawning '{} {}': {}", cmd, args.join(" "), e))?;
 
     if !output.status.success() {
@@ -98,7 +105,7 @@ fn get_command_output(cmd: &str, args: &[&str]) -> Result<String, Error> {
 }
 
 /// Invoke `nix-prefetch` for the given `package` and return the hash.
-fn nix_prefetch_from_crates_io(
+async fn nix_prefetch_from_crates_io(
     crate_derivation: &CrateDerivation,
     idx: usize,
     num_packages: usize,
@@ -118,7 +125,7 @@ fn nix_prefetch_from_crates_io(
             crate_derivation.crate_name, crate_derivation.version
         ),
     ];
-    get_command_output(cmd, &args)
+    get_command_output(cmd, &args).await
 }
 
 /// A struct used to contain the output returned by `nix-prefetch-git`.
@@ -131,7 +138,7 @@ struct NixPrefetchGitInfo {
     sha256: String,
 }
 
-fn nix_prefetch_from_git(
+async fn nix_prefetch_from_git(
     crate_derivation: &CrateDerivation,
     idx: usize,
     num_packages: usize,
@@ -151,7 +158,7 @@ fn nix_prefetch_from_git(
             args.extend_from_slice(&["--branch-name", r#ref]);
         }
 
-        let json = get_command_output(cmd, &args)?;
+        let json = get_command_output(cmd, &args).await?;
         let prefetch_info: NixPrefetchGitInfo = serde_json::from_str(&json)?;
         Ok(prefetch_info.sha256)
     } else {
