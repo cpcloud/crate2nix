@@ -813,7 +813,7 @@ rec {
           {
             name = "tokio";
             packageId = "tokio 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)";
-            features = [ "rt-core" "process" "io-std" "io-util" ];
+            features = [ "fs" "rt-core" "process" "io-std" "io-util" "macros" ];
           }
           {
             name = "toml";
@@ -4065,6 +4065,11 @@ rec {
             target = {target, features}: target."unix";
           }
           {
+            name = "tokio-macros";
+            packageId = "tokio-macros 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)";
+            optional = true;
+          }
+          {
             name = "winapi";
             packageId = "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)";
             optional = true;
@@ -4092,7 +4097,31 @@ rec {
           "udp" = [ "io-driver" ];
           "uds" = [ "io-driver" "mio-uds" "libc" ];
         };
-        resolvedDefaultFeatures = [ "default" "io-driver" "io-std" "io-util" "lazy_static" "libc" "memchr" "mio" "mio-named-pipes" "mio-uds" "process" "rt-core" "signal" "signal-hook-registry" "winapi" ];
+        resolvedDefaultFeatures = [ "default" "fs" "io-driver" "io-std" "io-util" "lazy_static" "libc" "macros" "memchr" "mio" "mio-named-pipes" "mio-uds" "process" "rt-core" "signal" "signal-hook-registry" "tokio-macros" "winapi" ];
+      };
+    "tokio-macros 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)"
+      = rec {
+        crateName = "tokio-macros";
+        version = "0.2.3";
+        edition = "2018";
+        sha256 = "0ylsnl247y9mz5v61s00iaz6vp0kr3pi9dfaipparcixi8k1z9jh";
+        procMacro = true;
+        authors = [
+          "Tokio Contributors <team@tokio.rs>"
+        ];
+        dependencies = [
+          {
+            name = "quote";
+            packageId = "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)";
+          }
+          {
+            name = "syn";
+            packageId = "syn 1.0.13 (registry+https://github.com/rust-lang/crates.io-index)";
+            features = [ "full" ];
+          }
+        ];
+        features = {
+        };
       };
     "toml 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)"
       = rec {
