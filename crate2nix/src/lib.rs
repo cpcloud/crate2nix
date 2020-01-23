@@ -142,7 +142,7 @@ async fn prefetch_and_fill_crates_sha256(
     default_nix: &mut BuildInfo,
 ) -> Result<(), Error> {
     let lock_file =
-        crate::lock::load_lock_file(&config.cargo_toml.parent().unwrap().join("Cargo.lock"))?;
+        crate::lock::load_lock_file(&config.cargo_toml.parent().unwrap().join("Cargo.lock")).await?;
 
     for package in default_nix.crates.iter_mut()
         .filter(|c| match c.source {

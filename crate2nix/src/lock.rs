@@ -5,9 +5,9 @@ use std::fmt;
 use std::path::Path;
 use std::str::FromStr;
 
-pub fn load_lock_file(path: &Path) -> Result<EncodableResolve, Error> {
+pub async fn load_lock_file(path: &Path) -> Result<EncodableResolve, Error> {
     let resolve: toml::Value = toml::from_str(
-        &std::fs::read_to_string(path)
+        &tokio::fs::read_to_string(path).await
             .map_err(|e| format_err!("while reading lock file {}: {}", path.display(), e))?,
     )
     .map_err(|e| format_err!("while parsing toml from {}: {}", path.display(), e))?;

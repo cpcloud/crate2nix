@@ -1,19 +1,15 @@
 //! Utilities for calling `nix-prefetch` on packages.
 
-use crate::resolve::{CrateDerivation, ResolvedSource};
-use crate::GenerateConfig;
+use std::{convert::TryInto, collections::BTreeMap, sync::Arc};
+use crate::{GenerateConfig, resolve::{CrateDerivation, ResolvedSource}};
 use cargo_metadata::PackageId;
-use failure::bail;
-use failure::format_err;
-use failure::Error;
+use failure::{bail, format_err, Error};
 use futures::StreamExt;
+use futures::TryStreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use serde::Deserialize;
-use std::collections::BTreeMap;
-use std::convert::TryInto;
-use std::sync::Arc;
-use tokio::io::AsyncWriteExt;
+use tokio::{fs, io::{self, AsyncWriteExt}, process::Command};
 
 /// Uses `nix-prefetch` to get the hashes of the sources for the given packages if they come from
 /// crates.io or git.
@@ -54,7 +50,7 @@ pub async fn prefetch(
     );
 
     let old_hashes_ref = &old_hashes;
-    let triples = futures::stream::iter(packages.iter().map(|package| {
+    let tasks = packages.iter().map(|package| {
         let pb = progress_bar.clone();
         async move {
             let sha256 = if let Some(hash) = old_hashes_ref.get(&package.package_id) {
@@ -74,11 +70,13 @@ pub async fn prefetch(
                 sha256,
             ))
         }
-    }))
-    .buffer_unordered(num_cpus::get())
-    .collect::<Vec<_>>().await
-        .into_iter()
-        .collect::<Result<Vec<_>, _>>()?;
+    });
+
+    // TODO: Is there a good way to choose this number?
+    let n_concurrent_tasks = num_cpus::get() * 10;
+    let triples: Vec<_> = futures::stream::iter(tasks)
+        .buffer_unordered(n_concurrent_tasks)
+        .try_collect().await?;
 
     for (package, (source, package_id, sha256)) in packages.iter_mut().zip(triples.into_iter()) {
         package.source = source;
@@ -86,10 +84,10 @@ pub async fn prefetch(
     }
 
     if hashes != old_hashes {
-        std::fs::write(
+        fs::write(
             &config.crate_hashes_json,
             serde_json::to_vec_pretty(&hashes)?,
-        )?;
+        ).await?;
         eprintln!(
             "Wrote hashes to {}.",
             config.crate_hashes_json.to_string_lossy()
@@ -100,15 +98,15 @@ pub async fn prefetch(
 }
 
 async fn get_command_output(cmd: &str, args: &[&str]) -> Result<String, Error> {
-    let output = tokio::process::Command::new(cmd)
+    let output = Command::new(cmd)
         .args(args)
         .output()
         .await
         .map_err(|e| format_err!("While spawning '{} {}': {}", cmd, args.join(" "), e))?;
 
     if !output.status.success() {
-        tokio::io::stdout().write_all(&output.stdout).await?;
-        tokio::io::stderr().write_all(&output.stderr).await?;
+        io::stdout().write_all(&output.stdout).await?;
+        io::stderr().write_all(&output.stderr).await?;
         bail!(
             "{}\n=> exited with: {}",
             cmd,
