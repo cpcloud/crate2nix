@@ -19,7 +19,7 @@ use tokio::io::AsyncWriteExt;
 /// crates.io or git.
 ///
 /// Uses and updates the existing hashes in the `config.crate_hash_json` file.
-pub fn prefetch(
+pub async fn prefetch(
     config: &GenerateConfig,
     crate_derivations: &mut [CrateDerivation],
 ) -> Result<BTreeMap<PackageId, String>, Error> {
@@ -54,7 +54,7 @@ pub fn prefetch(
     );
 
     let old_hashes_ref = &old_hashes;
-    let tasks = futures::stream::iter(packages.iter().map(|package| {
+    let triples = futures::stream::iter(packages.iter().map(|package| {
         let pb = progress_bar.clone();
         async move {
             let sha256 = if let Some(hash) = old_hashes_ref.get(&package.package_id) {
@@ -76,10 +76,7 @@ pub fn prefetch(
         }
     }))
     .buffer_unordered(num_cpus::get())
-    .collect::<Vec<_>>();
-
-    let triples = tokio::runtime::Runtime::new()?
-        .block_on(tasks)
+    .collect::<Vec<_>>().await
         .into_iter()
         .collect::<Result<Vec<_>, _>>()?;
 

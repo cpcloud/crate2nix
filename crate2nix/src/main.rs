@@ -79,7 +79,8 @@ pub enum Opt {
     },
 }
 
-fn main() -> CliResult {
+#[tokio::main]
+async fn main() -> CliResult {
     let opt = Opt::from_args();
     match opt {
         Opt::Generate {
@@ -113,9 +114,9 @@ fn main() -> CliResult {
                 nixpkgs_path,
                 crate_hashes_json,
             };
-            let build_info = crate2nix::BuildInfo::for_config(&generate_info, &generate_config)?;
+            let build_info = crate2nix::BuildInfo::for_config(&generate_info, &generate_config).await?;
             let nix_string = render::render_build_file(&build_info)?;
-            render::write_to_file(&output, &nix_string)?;
+            render::write_to_file(&output, &nix_string).await?;
         }
         Opt::Completions { shell, output } => {
             let shell = FromStr::from_str(&shell).map_err(|s| format_err!("{}", s))?;

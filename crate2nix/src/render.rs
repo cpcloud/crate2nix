@@ -1,6 +1,5 @@
 //! "Render" files using tera templates.
-use std::fs::File;
-use std::io::Write;
+use tokio::io::AsyncWriteExt;
 use std::path::Path;
 
 use failure::format_err;
@@ -25,10 +24,9 @@ pub fn render_build_file(metadata: &BuildInfo) -> Result<String, Error> {
         })?)
 }
 
-pub fn write_to_file(path: impl AsRef<Path>, contents: &str) -> Result<(), Error> {
-    let mut output_file = File::create(&path)?;
-    output_file.write_all(contents.as_bytes())?;
-    println!(
+pub async fn write_to_file(path: impl AsRef<Path>, contents: &str) -> Result<(), Error> {
+    tokio::fs::File::create(&path).await?.write_all(contents.as_bytes()).await?;
+    eprintln!(
         "Generated {} successfully.",
         path.as_ref().to_string_lossy()
     );

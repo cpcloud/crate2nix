@@ -47,7 +47,7 @@ pub struct BuildInfo {
 
 impl BuildInfo {
     /// Return the `NixBuildInfo` data ready for rendering the nix build file.
-    pub fn for_config(info: &GenerateInfo, config: &GenerateConfig) -> Result<BuildInfo, Error> {
+    pub async fn for_config(info: &GenerateInfo, config: &GenerateConfig) -> Result<BuildInfo, Error> {
         let metadata = cargo_metadata(config)?;
         let indexed_metadata = IndexedMetadata::new_from(metadata).map_err(|e| {
             format_err!(
@@ -60,7 +60,7 @@ impl BuildInfo {
 
         default_nix.prune_unneeded_crates();
 
-        prefetch_and_fill_crates_sha256(config, &mut default_nix)?;
+        prefetch_and_fill_crates_sha256(config, &mut default_nix).await?;
 
         Ok(default_nix)
     }
@@ -137,7 +137,7 @@ fn cargo_metadata(config: &GenerateConfig) -> Result<Metadata, Error> {
 }
 
 /// Prefetch hashes when necessary.
-fn prefetch_and_fill_crates_sha256(
+async fn prefetch_and_fill_crates_sha256(
     config: &GenerateConfig,
     default_nix: &mut BuildInfo,
 ) -> Result<(), Error> {
@@ -154,7 +154,7 @@ fn prefetch_and_fill_crates_sha256(
         }
     }
 
-    prefetch::prefetch(config, &mut default_nix.crates)
+    prefetch::prefetch(config, &mut default_nix.crates).await
         .map_err(|e| format_err!("while prefetching crates for calculating sha256: {}", e))?;
     Ok(())
 }
